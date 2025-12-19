@@ -708,6 +708,14 @@
     "image": "images\\hisona_(suaritesumi).jpg"
   },
   {
+    "name": "hiten_(hitenkei)",
+    "image": "images\\hiten_(hitenkei).jpg"
+  },
+  {
+    "name": "hito",
+    "image": "images\\hito.jpg"
+  },
+  {
     "name": "hito_komoru",
     "image": "images\\hito_komoru.jpg"
   },
@@ -1386,6 +1394,10 @@
   {
     "name": "missile228",
     "image": "images\\missile228.jpg"
+  },
+  {
+    "name": "misyune",
+    "image": "images\\misyune.jpg"
   },
   {
     "name": "miu_(miuuu_721)",

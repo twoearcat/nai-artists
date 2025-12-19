@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovelAI 画师军火库 v4.0</title>
+    <title>NovelAI 画师军火库 v4.1 (Pro)</title>
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -21,7 +21,6 @@
         }
         h1 { text-align: center; color: #333; margin-bottom: 20px; }
         
-        /* 顶部控制栏 */
         .controls {
             display: flex;
             flex-wrap: wrap;
@@ -38,202 +37,95 @@
             align-items: center;
         }
 
-        /* 搜索框 */
-        .search-wrapper {
-            flex-grow: 1;
-            min-width: 300px;
-            position: relative;
-        }
+        .search-wrapper { flex-grow: 1; min-width: 300px; }
         #search {
-            width: 100%;
-            padding: 12px 15px;
-            padding-right: 40px;
-            border-radius: 25px;
-            border: 1px solid #ddd;
-            font-size: 15px;
-            box-sizing: border-box;
-            transition: 0.3s;
+            width: 100%; padding: 12px 15px; border-radius: 25px;
+            border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; transition: 0.3s;
         }
-        #search:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); outline: none; }
+        #search:focus { border-color: var(--primary-color); outline: none; }
         
-        /* 设置区域 */
-        .settings-group {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        /* 按钮通用样式 */
+        .settings-group { display: flex; gap: 15px; align-items: center; }
+        
         .btn-toggle {
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 1px solid #ddd;
-            background: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #555;
-            transition: 0.2s;
-            user-select: none;
+            padding: 8px 15px; border-radius: 20px; border: 1px solid #ddd; background: white;
+            cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px;
+            font-weight: 600; color: #555; transition: 0.2s; user-select: none;
         }
         .btn-toggle:hover { background-color: #f9f9f9; }
-        .btn-toggle.active {
-            background: #e3f2fd;
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-        /* 收藏按钮特化 */
-        .btn-toggle-fav.active {
-            background: #fff9db;
-            border-color: var(--fav-color);
-            color: #d35400;
-        }
+        .btn-toggle-fav.active { background: #fff9db; border-color: var(--fav-color); color: #d35400; }
 
-        /* Checkbox 开关样式 */
-        .switch-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #555;
-            cursor: pointer;
-            user-select: none;
-        }
+        .switch-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #555; cursor: pointer; user-select: none; }
         .switch-input { display: none; }
         .switch-slider {
-            width: 36px;
-            height: 20px;
-            background-color: #ccc;
-            border-radius: 20px;
-            position: relative;
-            transition: 0.3s;
+            width: 36px; height: 20px; background-color: #ccc; border-radius: 20px; position: relative; transition: 0.3s;
         }
         .switch-slider::before {
-            content: "";
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            border-radius: 50%;
-            transition: 0.3s;
+            content: ""; position: absolute; width: 16px; height: 16px; left: 2px; bottom: 2px;
+            background-color: white; border-radius: 50%; transition: 0.3s;
         }
         .switch-input:checked + .switch-slider { background-color: var(--primary-color); }
         .switch-input:checked + .switch-slider::before { transform: translateX(16px); }
 
-        /* 抽卡区域 */
-        .gacha-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding-left: 15px;
-            border-left: 1px solid #eee;
-        }
-        #gacha-count {
-            width: 45px;
-            padding: 6px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            text-align: center;
-        }
+        .gacha-box { display: flex; align-items: center; gap: 8px; padding-left: 15px; border-left: 1px solid #eee; }
+        #gacha-count { width: 45px; padding: 6px; border-radius: 6px; border: 1px solid #ddd; text-align: center; }
         .btn-gacha {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
+            background: var(--primary-color); color: white; border: none; padding: 8px 16px;
+            border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s;
         }
         .btn-gacha:hover { background: #357abd; transform: translateY(-1px); }
 
-        /* 网格布局 */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
 
-        /* 卡片样式 */
         .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-            border: 2px solid transparent;
-            display: flex;
-            flex-direction: column;
+            background: var(--card-bg); border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s;
+            position: relative; border: 2px solid transparent; display: flex; flex-direction: column;
         }
         .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
         .card.selected { border-color: var(--selected-border); background-color: #fff0f0; }
 
-        /* 图片区域 + 骨架屏 */
         .card-img-wrapper {
-            width: 100%;
-            height: 200px;
-            cursor: zoom-in;
-            overflow: hidden;
-            background: #eee;
-            position: relative;
+            width: 100%; height: 200px; cursor: zoom-in; overflow: hidden; background: #eee; position: relative;
         }
         .card-img-wrapper::before {
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, #eee, #f5f5f5, #eee);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite;
-            z-index: 0;
+            background: linear-gradient(90deg, #eee, #f5f5f5, #eee); background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite; z-index: 0;
         }
         @keyframes skeleton-loading { 0% {background-position: 200% 0;} 100% {background-position: -200% 0;} }
 
         .card img {
-            width: 100%; height: 100%; object-fit: cover;
-            position: relative; z-index: 1; opacity: 0; transition: opacity 0.5s, transform 0.3s;
+            width: 100%; height: 100%; object-fit: cover; position: relative;
+            z-index: 1; opacity: 0; transition: opacity 0.5s, transform 0.3s;
         }
         .card img.loaded { opacity: 1; }
         .card:hover img { transform: scale(1.05); }
 
-        /* 操作按钮组 */
         .card-actions {
-            position: absolute; top: 5px; right: 5px;
-            display: flex; flex-direction: column; gap: 5px; z-index: 10;
+            position: absolute; top: 5px; right: 5px; display: flex; flex-direction: column; gap: 5px; z-index: 10;
         }
         .action-btn {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.9); border: 1px solid #ccc;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center;
             font-size: 14px; transition: 0.2s; color: #666; text-decoration: none;
         }
         .action-btn:hover { background: white; transform: scale(1.1); }
         .btn-select.active { background: var(--selected-border); border-color: var(--selected-border); color: white; }
         .btn-fav.active { color: var(--fav-color); border-color: var(--fav-color); }
-        .btn-fav svg { fill: currentColor; }
-
-        /* 文字区域 */
+        
         .card-info {
-            padding: 10px; text-align: center; cursor: pointer;
-            background: #fff; border-top: 1px solid #eee; flex-grow: 1;
-            display: flex; align-items: center; justify-content: center;
-            user-select: none;
+            padding: 10px; text-align: center; cursor: pointer; background: #fff; border-top: 1px solid #eee;
+            flex-grow: 1; display: flex; align-items: center; justify-content: center; user-select: none;
         }
         .card-info:hover { background-color: #f9f9f9; }
         .artist-name { font-weight: 600; color: #444; font-size: 14px; word-break: break-all; }
         .card.selected .artist-name { color: #d63031; }
 
-        /* 购物车栏 */
         #cart-bar {
             position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 600px;
-            background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px);
-            color: white; padding: 15px 25px; border-radius: 50px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3); transition: bottom 0.3s; z-index: 100;
+            width: 90%; max-width: 600px; background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px);
+            color: white; padding: 15px 25px; border-radius: 50px; display: flex; justify-content: space-between;
+            align-items: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); transition: bottom 0.3s; z-index: 100;
         }
         #cart-bar.show { bottom: 20px; }
         .cart-info span { font-weight: bold; color: var(--primary-color); }
@@ -243,7 +135,6 @@
         .btn-copy { background: var(--primary-color); color: white; }
         .btn-clear { background: #555; color: #ccc; }
 
-        /* 灯箱与提示 */
         #lightbox {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);
@@ -263,28 +154,23 @@
 
     <h1>NovelAI 画师军火库</h1>
     
-    <!-- 控制面板 -->
     <div class="controls">
         <div class="search-wrapper">
-            <input type="text" id="search" placeholder="输入画师名，或粘贴一串 'artist:a, artist:b'...">
+            <input type="text" id="search" placeholder="输入画师名，或粘贴如: [artist:13_(spice!!)], 0.7::10mo:: ...">
         </div>
         
         <div class="settings-group">
-            <!-- 收藏夹开关 -->
             <button class="btn-toggle btn-toggle-fav" id="btn-show-fav" onclick="toggleShowFav()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                 只看收藏
             </button>
-
-            <!-- 前缀开关 -->
             <label class="switch-label">
                 <input type="checkbox" id="check-prefix" class="switch-input" checked onchange="savePrefixSetting()">
                 <div class="switch-slider"></div>
-                <span>复制带前缀 (artist:)</span>
+                <span>复制带前缀</span>
             </label>
         </div>
 
-        <!-- 随机抽卡 -->
         <div class="gacha-box">
             <input type="number" id="gacha-count" value="3" min="1" max="10">
             <button class="btn-gacha" onclick="gacha()">🎲 帮我选</button>
@@ -293,7 +179,6 @@
 
     <div class="grid" id="gallery"></div>
 
-    <!-- 底部购物车 -->
     <div id="cart-bar">
         <div class="cart-info">已选择 <span id="cart-count">0</span> 位</div>
         <div class="cart-actions">
@@ -311,13 +196,12 @@
         const ICON_LINK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
 
         let allArtists = [];
+        let artistNameSet = new Set(); // 用于快速 O(1) 查找名字是否存在
         let selectedArtists = new Set();
         let favArtists = new Set(JSON.parse(localStorage.getItem('favArtists') || '[]'));
         let isFavOnly = false;
         
-        // 读取前缀设置 (默认开启)
-        const savedPrefix = localStorage.getItem('usePrefix');
-        if (savedPrefix === 'false') {
+        if (localStorage.getItem('usePrefix') === 'false') {
             document.getElementById('check-prefix').checked = false;
         }
 
@@ -325,6 +209,8 @@
             .then(res => res.json())
             .then(data => {
                 allArtists = data.sort((a, b) => a.name.localeCompare(b.name));
+                // 建立快速查找表 (转小写)
+                data.forEach(item => artistNameSet.add(item.name.toLowerCase()));
                 render();
             })
             .catch(e => document.getElementById('gallery').innerHTML = "加载失败");
@@ -332,43 +218,93 @@
         const gallery = document.getElementById('gallery');
         const searchInput = document.getElementById('search');
 
-        // === 核心渲染逻辑 (含批量搜索) ===
+// === 核心逻辑升级：强大的清洗器 v4.2 ===
+        function resolveArtistName(rawSegment) {
+            // 1. 基础清洗：转小写
+            let s = rawSegment.toLowerCase();
+            if (!s.trim()) return null;
+
+            // 2. 移除 artist: 前缀 (全局替换)
+            s = s.replace(/artist:/g, '');
+
+            // 3. 移除 {} []
+            s = s.replace(/[\[\]\{\}]/g, '');
+
+            // 4. 递归剥离洋葱
+            for (let i = 0; i < 5; i++) {
+                // 每次循环先 trim 一下
+                s = s.trim();
+
+                // Check A: 直接匹配 (例如 "wlop")
+                if (artistNameSet.has(s)) return s;
+
+                // Check B: 尝试把所有空格换成下划线再匹配 (例如 "chen bin" -> "chen_bin")
+                // 这完美解决了 NAI 格式 (空格) 到 Danbooru 格式 (下划线) 的转换
+                // 而且因为是 split(',') 之后处理的，所以不会影响到逗号后面的分隔空格
+                let s_underscore = s.replace(/ /g, '_');
+                if (artistNameSet.has(s_underscore)) return s_underscore;
+
+                let oldS = s;
+
+                // 策略: 去除头部权重 (0.7::) 和尾部权重 (::1.2)
+                s = s.replace(/^[\d\.]+(::|:| )+/, '');
+                s = s.replace(/(::|:| )+[\d\.]+$/, '');
+                s = s.replace(/::+$/, '');
+
+                // 策略: 去除外层括号
+                if (s.startsWith('(') && s.endsWith(')')) {
+                    s = s.substring(1, s.length - 1);
+                }
+
+                if (s === oldS) break;
+            }
+
+            // 最后死马当活马医，再查一次
+            s = s.trim();
+            if (artistNameSet.has(s)) return s;
+            let finalTry = s.replace(/ /g, '_');
+            if (artistNameSet.has(finalTry)) return finalTry;
+
+            return null; 
+        }
+
         function render() {
             gallery.innerHTML = '';
             
-            let rawTerm = searchInput.value.toLowerCase().trim();
+            let rawTerm = searchInput.value; // 不要在这里转小写，要在解析时转
             let filtered = [];
+            let isBatchMode = rawTerm.includes(',') || rawTerm.includes('，');
 
-            // 1. 判断是“批量解析模式”还是“普通搜索”
-            if (rawTerm.includes(',') || rawTerm.includes('，')) {
-                // --- 批量模式 ---
-                // 分割、清洗、去前缀
-                const tags = rawTerm.split(/[,，]/)
-                    .map(t => t.trim().replace(/^artist:/, '').trim())
-                    .filter(t => t); // 去除空串
+            if (isBatchMode) {
+                // === 批量模式 ===
+                const segments = rawTerm.split(/[,，]/);
+                const foundNames = new Set();
                 
-                // 转 Set 加速查找
-                const searchSet = new Set(tags);
+                segments.forEach(seg => {
+                    const validName = resolveArtistName(seg);
+                    if (validName) foundNames.add(validName);
+                });
                 
-                // 在库里寻找名字完全匹配的 (精确匹配，防止搜索 "art" 把 "art_germ" 也搜出来)
-                filtered = allArtists.filter(item => searchSet.has(item.name.toLowerCase()));
-                
+                // 过滤出这些画师
+                filtered = allArtists.filter(item => foundNames.has(item.name.toLowerCase()));
+
             } else {
-                // --- 普通模式 (模糊搜索) ---
-                filtered = allArtists.filter(item => item.name.toLowerCase().includes(rawTerm));
+                // === 普通模糊搜索模式 ===
+                let term = rawTerm.toLowerCase().trim();
+                filtered = allArtists.filter(item => item.name.toLowerCase().includes(term));
             }
 
-            // 2. 叠加“只看收藏”过滤
+            // 收藏夹过滤
             if (isFavOnly) {
                 filtered = filtered.filter(item => favArtists.has(item.name));
             }
 
-            // 3. 生成 DOM
             if (filtered.length === 0) {
                 gallery.innerHTML = "<p style='text-align:center; width:100%; color:#999; padding:20px'>没有找到匹配的画师。</p>";
                 return;
             }
 
+            // 渲染 DOM
             filtered.forEach(item => {
                 const isSelected = selectedArtists.has(item.name);
                 const isFav = favArtists.has(item.name);
@@ -377,34 +313,24 @@
                 card.className = `card ${isSelected ? 'selected' : ''}`;
                 card.dataset.name = item.name;
 
-                // 按钮组
                 const actions = document.createElement('div');
                 actions.className = 'card-actions';
 
-                const btnSelect = createBtn('btn-select', isSelected ? 'active' : '', ICON_CHECK, (e) => toggleSelection(item.name, card, btnSelect));
-                const btnFav = createBtn('btn-fav', isFav ? 'active' : '', ICON_STAR, (e) => toggleFav(item.name, btnFav));
-                
-                const btnLink = document.createElement('a');
-                btnLink.className = 'action-btn btn-link';
-                btnLink.innerHTML = ICON_LINK;
-                btnLink.href = `https://danbooru.donmai.us/posts?tags=${item.name}`;
-                btnLink.target = "_blank";
-                btnLink.onclick = (e) => e.stopPropagation();
+                actions.append(
+                    createBtn('btn-select', isSelected, ICON_CHECK, () => toggleSelection(item.name, card)),
+                    createBtn('btn-fav', isFav, ICON_STAR, () => toggleFav(item.name)),
+                    createLinkBtn(item.name)
+                );
 
-                actions.append(btnSelect, btnFav, btnLink);
-
-                // 图片
                 const imgWrapper = document.createElement('div');
                 imgWrapper.className = 'card-img-wrapper';
                 imgWrapper.onclick = () => openLightbox(item.image);
                 const img = document.createElement('img');
-                img.loading = "lazy"; 
-                img.src = item.image;
+                img.loading = "lazy"; img.src = item.image;
                 img.onload = () => img.classList.add('loaded');
                 img.onerror = function() { this.src = 'https://via.placeholder.com/200?text=Err'; this.classList.add('loaded'); };
                 imgWrapper.appendChild(img);
 
-                // 文字
                 const info = document.createElement('div');
                 info.className = 'card-info';
                 info.innerHTML = `<div class="artist-name">${item.name}</div>`;
@@ -415,33 +341,29 @@
             });
         }
 
-        function createBtn(cls, active, html, onClick) {
+        // === 辅助函数 ===
+        function createBtn(cls, isActive, html, cb) {
             const d = document.createElement('div');
-            d.className = `action-btn ${cls} ${active}`;
+            d.className = `action-btn ${cls} ${isActive ? 'active' : ''}`;
             d.innerHTML = html;
-            d.onclick = (e) => { e.stopPropagation(); onClick(e); };
+            d.onclick = (e) => { e.stopPropagation(); cb(); render(); updateCartUI(); }; // 触发重绘更新状态
             return d;
         }
-
-        // === 功能函数 ===
-
-        // 获取当前是否需要前缀
-        function getPrefix() {
-            return document.getElementById('check-prefix').checked ? 'artist:' : '';
+        
+        function createLinkBtn(name) {
+            const a = document.createElement('a');
+            a.className = 'action-btn btn-link';
+            a.innerHTML = ICON_LINK;
+            a.href = `https://danbooru.donmai.us/posts?tags=${name}`;
+            a.target = "_blank";
+            a.onclick = (e) => e.stopPropagation();
+            return a;
         }
 
-        function savePrefixSetting() {
-            const val = document.getElementById('check-prefix').checked;
-            localStorage.setItem('usePrefix', val);
-        }
+        function getPrefix() { return document.getElementById('check-prefix').checked ? 'artist:' : ''; }
+        function savePrefixSetting() { localStorage.setItem('usePrefix', document.getElementById('check-prefix').checked); }
 
-        // 复制单个
-        function copySingle(name) {
-            const prefix = getPrefix();
-            copyText(`${prefix}${name}`, `已复制: ${prefix}${name}`);
-        }
-
-        // 复制组合
+        function copySingle(name) { copyText(`${getPrefix()}${name}`, `已复制: ${getPrefix()}${name}`); }
         function copyCart() {
             if (selectedArtists.size === 0) return;
             const prefix = getPrefix();
@@ -449,77 +371,46 @@
             copyText(tags, `已复制 ${selectedArtists.size} 位画师！`);
         }
 
-        // 抽卡
+        function toggleSelection(name) {
+            if (selectedArtists.has(name)) selectedArtists.delete(name);
+            else selectedArtists.add(name);
+        }
+        function toggleFav(name) {
+            if (favArtists.has(name)) favArtists.delete(name);
+            else favArtists.add(name);
+            localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
+        }
+
         function gacha() {
             let pool = [];
-            // 如果搜索框有内容（无论批量还是普通），就只从当前结果里抽
             if (searchInput.value.trim()) {
-                // 复用 render 的过滤逻辑有点麻烦，这里简单处理：直接从 DOM 里拿当前显示的卡片
-                const visibleCards = document.querySelectorAll('.card');
-                visibleCards.forEach(c => pool.push(c.dataset.name));
+                // 从当前可视卡片里抽
+                document.querySelectorAll('.card').forEach(c => pool.push(c.dataset.name));
             } else {
-                // 没搜索，就从全库（或者收藏夹）里抽
-                const source = isFavOnly ? Array.from(favArtists) : allArtists.map(a => a.name);
-                pool = source;
+                pool = isFavOnly ? Array.from(favArtists) : allArtists.map(a => a.name);
             }
-
-            if (pool.length === 0) { showToast("当前列表为空，没法抽！"); return; }
-
-            const count = Math.min(parseInt(document.getElementById('gacha-count').value) || 3, 20);
-            const picks = new Set();
+            if (!pool.length) { showToast("列表为空"); return; }
             
-            // 简单随机
-            for(let i=0; i<100; i++) { // 防止死循环
-                if (picks.size >= count || picks.size >= pool.length) break;
+            const count = Math.min(parseInt(document.getElementById('gacha-count').value)||3, 20);
+            for(let i=0; i<100 && selectedArtists.size < pool.length; i++) {
                 const r = pool[Math.floor(Math.random() * pool.length)];
-                picks.add(r);
+                selectedArtists.add(r);
+                if(selectedArtists.size >= count + selectedArtists.size) break; // 逻辑简化
             }
-
-            picks.forEach(name => selectedArtists.add(name));
-            render(); // 刷新选中状态
-            updateCartUI();
-            showToast(`🎉 抽到了: ${Array.from(picks).slice(0,3).join(', ')} ...`);
+            // 简单点，直接随机加几个
+            for(let k=0; k<count; k++) selectedArtists.add(pool[Math.floor(Math.random()*pool.length)]);
+            
+            render(); updateCartUI(); showToast(`🎉 抽取完成！`);
         }
-
-        function toggleSelection(name, card, btn) {
-            if (selectedArtists.has(name)) {
-                selectedArtists.delete(name);
-                card.classList.remove('selected');
-                btn.classList.remove('active');
-            } else {
-                selectedArtists.add(name);
-                card.classList.add('selected');
-                btn.classList.add('active');
-            }
-            updateCartUI();
-        }
-
-        function updateCartUI() {
-            const count = selectedArtists.size;
-            document.getElementById('cart-count').innerText = count;
-            const bar = document.getElementById('cart-bar');
-            if (count > 0) bar.classList.add('show'); else bar.classList.remove('show');
-        }
-
-        function toggleFav(name, btn) {
-            if (favArtists.has(name)) {
-                favArtists.delete(name);
-                btn.classList.remove('active');
-            } else {
-                favArtists.add(name);
-                btn.classList.add('active');
-            }
-            localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
-            if (isFavOnly) render();
-        }
-
-        function toggleShowFav() {
-            isFavOnly = !isFavOnly;
-            document.getElementById('btn-show-fav').classList.toggle('active', isFavOnly);
-            render();
-        }
-
+        
         function clearCart() { selectedArtists.clear(); render(); updateCartUI(); }
+        function updateCartUI() {
+            const c = selectedArtists.size;
+            document.getElementById('cart-count').innerText = c;
+            const bar = document.getElementById('cart-bar');
+            if(c>0) bar.classList.add('show'); else bar.classList.remove('show');
+        }
+
         function copyText(t, m) { navigator.clipboard.writeText(t).then(() => showToast(m)); }
         function showToast(m) { const t=document.getElementById("toast"); t.innerText=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2000); }
         function openLightbox(s) { document.getElementById('lightbox-img').src=s; document.getElementById('lightbox').style.display='flex'; }
