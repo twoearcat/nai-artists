@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovelAI 画师军火库 v3.0</title>
+    <title>NovelAI 画师军火库 v4.0</title>
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -17,7 +17,7 @@
             background-color: var(--bg-color);
             margin: 0;
             padding: 20px;
-            padding-bottom: 100px;
+            padding-bottom: 120px;
         }
         h1 { text-align: center; color: #333; margin-bottom: 20px; }
         
@@ -29,31 +29,42 @@
             gap: 15px;
             margin-bottom: 30px;
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            max-width: 900px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 1000px;
             margin-left: auto;
             margin-right: auto;
             align-items: center;
         }
 
         /* 搜索框 */
-        .search-box {
+        .search-wrapper {
             flex-grow: 1;
-            min-width: 200px;
+            min-width: 300px;
+            position: relative;
         }
         #search {
             width: 100%;
-            padding: 10px 15px;
-            border-radius: 20px;
+            padding: 12px 15px;
+            padding-right: 40px;
+            border-radius: 25px;
             border: 1px solid #ddd;
             font-size: 15px;
-            box-sizing: border-box; 
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+        #search:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); outline: none; }
+        
+        /* 设置区域 */
+        .settings-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
         }
 
-        /* 收藏夹按钮 */
-        .btn-toggle-fav {
+        /* 按钮通用样式 */
+        .btn-toggle {
             padding: 8px 15px;
             border-radius: 20px;
             border: 1px solid #ddd;
@@ -61,17 +72,59 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            font-size: 14px;
             font-weight: 600;
             color: #555;
             transition: 0.2s;
+            user-select: none;
         }
+        .btn-toggle:hover { background-color: #f9f9f9; }
+        .btn-toggle.active {
+            background: #e3f2fd;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        /* 收藏按钮特化 */
         .btn-toggle-fav.active {
             background: #fff9db;
             border-color: var(--fav-color);
             color: #d35400;
         }
-        
+
+        /* Checkbox 开关样式 */
+        .switch-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+            user-select: none;
+        }
+        .switch-input { display: none; }
+        .switch-slider {
+            width: 36px;
+            height: 20px;
+            background-color: #ccc;
+            border-radius: 20px;
+            position: relative;
+            transition: 0.3s;
+        }
+        .switch-slider::before {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .switch-input:checked + .switch-slider { background-color: var(--primary-color); }
+        .switch-input:checked + .switch-slider::before { transform: translateX(16px); }
+
         /* 抽卡区域 */
         .gacha-box {
             display: flex;
@@ -81,9 +134,9 @@
             border-left: 1px solid #eee;
         }
         #gacha-count {
-            width: 50px;
-            padding: 5px;
-            border-radius: 5px;
+            width: 45px;
+            padding: 6px;
+            border-radius: 6px;
             border: 1px solid #ddd;
             text-align: center;
         }
@@ -121,20 +174,17 @@
         .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
         .card.selected { border-color: var(--selected-border); background-color: #fff0f0; }
 
-        /* 图片区域 + 骨架屏动画 */
+        /* 图片区域 + 骨架屏 */
         .card-img-wrapper {
             width: 100%;
             height: 200px;
             cursor: zoom-in;
             overflow: hidden;
-            background: #eee; /* 骨架屏底色 */
+            background: #eee;
             position: relative;
         }
-        /* 只有当图片还没加载出来时，这个动画才明显 */
         .card-img-wrapper::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(90deg, #eee, #f5f5f5, #eee);
             background-size: 200% 100%;
             animation: skeleton-loading 1.5s infinite;
@@ -143,65 +193,33 @@
         @keyframes skeleton-loading { 0% {background-position: 200% 0;} 100% {background-position: -200% 0;} }
 
         .card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: relative;
-            z-index: 1; /* 图片在骨架屏上面 */
-            opacity: 0; /* 初始透明 */
-            transition: opacity 0.5s, transform 0.3s;
+            width: 100%; height: 100%; object-fit: cover;
+            position: relative; z-index: 1; opacity: 0; transition: opacity 0.5s, transform 0.3s;
         }
         .card img.loaded { opacity: 1; }
         .card:hover img { transform: scale(1.05); }
 
-        /* 操作按钮组 (绝对定位在图片上) */
+        /* 操作按钮组 */
         .card-actions {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            z-index: 10;
+            position: absolute; top: 5px; right: 5px;
+            display: flex; flex-direction: column; gap: 5px; z-index: 10;
         }
-        
         .action-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #ccc;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            transition: 0.2s;
-            color: #666;
-            text-decoration: none; /* for link */
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9); border: 1px solid #ccc;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; transition: 0.2s; color: #666; text-decoration: none;
         }
         .action-btn:hover { background: white; transform: scale(1.1); }
-        
-        /* 选中勾勾 */
         .btn-select.active { background: var(--selected-border); border-color: var(--selected-border); color: white; }
-        /* 收藏星星 */
         .btn-fav.active { color: var(--fav-color); border-color: var(--fav-color); }
         .btn-fav svg { fill: currentColor; }
-        
-        /* Danbooru 链接 */
-        .btn-link { font-size: 12px; }
 
         /* 文字区域 */
         .card-info {
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            background: #fff;
-            border-top: 1px solid #eee;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 10px; text-align: center; cursor: pointer;
+            background: #fff; border-top: 1px solid #eee; flex-grow: 1;
+            display: flex; align-items: center; justify-content: center;
             user-select: none;
         }
         .card-info:hover { background-color: #f9f9f9; }
@@ -225,15 +243,13 @@
         .btn-copy { background: var(--primary-color); color: white; }
         .btn-clear { background: #555; color: #ccc; }
 
-        /* 灯箱 */
+        /* 灯箱与提示 */
         #lightbox {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);
             justify-content: center; align-items: center; cursor: zoom-out;
         }
         #lightbox img { max-width: 90%; max-height: 90%; border-radius: 4px; }
-
-        /* 提示框 */
         .toast {
             visibility: hidden; min-width: 200px; background-color: #333; color: #fff;
             text-align: center; border-radius: 4px; padding: 12px; position: fixed;
@@ -249,15 +265,24 @@
     
     <!-- 控制面板 -->
     <div class="controls">
-        <div class="search-box">
-            <input type="text" id="search" placeholder="搜索画师名...">
+        <div class="search-wrapper">
+            <input type="text" id="search" placeholder="输入画师名，或粘贴一串 'artist:a, artist:b'...">
         </div>
         
-        <!-- 收藏夹开关 -->
-        <button class="btn-toggle-fav" id="btn-show-fav" onclick="toggleShowFav()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-            只看收藏
-        </button>
+        <div class="settings-group">
+            <!-- 收藏夹开关 -->
+            <button class="btn-toggle btn-toggle-fav" id="btn-show-fav" onclick="toggleShowFav()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                只看收藏
+            </button>
+
+            <!-- 前缀开关 -->
+            <label class="switch-label">
+                <input type="checkbox" id="check-prefix" class="switch-input" checked onchange="savePrefixSetting()">
+                <div class="switch-slider"></div>
+                <span>复制带前缀 (artist:)</span>
+            </label>
+        </div>
 
         <!-- 随机抽卡 -->
         <div class="gacha-box">
@@ -277,48 +302,72 @@
         </div>
     </div>
 
-    <!-- 灯箱 -->
     <div id="lightbox" onclick="closeLightbox()"><img id="lightbox-img" src=""></div>
     <div id="toast" class="toast">提示信息</div>
 
     <script>
-        // 定义 SVG 图标字符串，方便复用
         const ICON_CHECK = '✓';
         const ICON_STAR = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></svg>';
         const ICON_LINK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
 
         let allArtists = [];
         let selectedArtists = new Set();
-        // 从 localStorage 读取收藏列表
         let favArtists = new Set(JSON.parse(localStorage.getItem('favArtists') || '[]'));
-        let isFavOnly = false; // 是否只显示收藏
+        let isFavOnly = false;
+        
+        // 读取前缀设置 (默认开启)
+        const savedPrefix = localStorage.getItem('usePrefix');
+        if (savedPrefix === 'false') {
+            document.getElementById('check-prefix').checked = false;
+        }
 
-        // 1. 加载数据
         fetch('artist_data.json')
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 allArtists = data.sort((a, b) => a.name.localeCompare(b.name));
                 render();
             })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('gallery').innerHTML = "<p style='text-align:center'>数据加载失败，请检查 artist_data.json</p>";
-            });
+            .catch(e => document.getElementById('gallery').innerHTML = "加载失败");
 
         const gallery = document.getElementById('gallery');
         const searchInput = document.getElementById('search');
 
-        // 2. 渲染主函数
+        // === 核心渲染逻辑 (含批量搜索) ===
         function render() {
             gallery.innerHTML = '';
             
-            // 过滤逻辑：同时满足 搜索词 和 收藏筛选
-            const term = searchInput.value.toLowerCase();
-            const filtered = allArtists.filter(item => {
-                const matchName = item.name.toLowerCase().includes(term);
-                const matchFav = isFavOnly ? favArtists.has(item.name) : true;
-                return matchName && matchFav;
-            });
+            let rawTerm = searchInput.value.toLowerCase().trim();
+            let filtered = [];
+
+            // 1. 判断是“批量解析模式”还是“普通搜索”
+            if (rawTerm.includes(',') || rawTerm.includes('，')) {
+                // --- 批量模式 ---
+                // 分割、清洗、去前缀
+                const tags = rawTerm.split(/[,，]/)
+                    .map(t => t.trim().replace(/^artist:/, '').trim())
+                    .filter(t => t); // 去除空串
+                
+                // 转 Set 加速查找
+                const searchSet = new Set(tags);
+                
+                // 在库里寻找名字完全匹配的 (精确匹配，防止搜索 "art" 把 "art_germ" 也搜出来)
+                filtered = allArtists.filter(item => searchSet.has(item.name.toLowerCase()));
+                
+            } else {
+                // --- 普通模式 (模糊搜索) ---
+                filtered = allArtists.filter(item => item.name.toLowerCase().includes(rawTerm));
+            }
+
+            // 2. 叠加“只看收藏”过滤
+            if (isFavOnly) {
+                filtered = filtered.filter(item => favArtists.has(item.name));
+            }
+
+            // 3. 生成 DOM
+            if (filtered.length === 0) {
+                gallery.innerHTML = "<p style='text-align:center; width:100%; color:#999; padding:20px'>没有找到匹配的画师。</p>";
+                return;
+            }
 
             filtered.forEach(item => {
                 const isSelected = selectedArtists.has(item.name);
@@ -328,136 +377,110 @@
                 card.className = `card ${isSelected ? 'selected' : ''}`;
                 card.dataset.name = item.name;
 
-                // --- 顶部按钮区 ---
+                // 按钮组
                 const actions = document.createElement('div');
                 actions.className = 'card-actions';
 
-                // A. 购物车勾选
-                const btnSelect = document.createElement('div');
-                btnSelect.className = `action-btn btn-select ${isSelected ? 'active' : ''}`;
-                btnSelect.innerHTML = ICON_CHECK;
-                btnSelect.title = "加入/移出组合";
-                btnSelect.onclick = (e) => { e.stopPropagation(); toggleSelection(item.name, card, btnSelect); };
-
-                // B. 收藏星星
-                const btnFav = document.createElement('div');
-                btnFav.className = `action-btn btn-fav ${isFav ? 'active' : ''}`;
-                btnFav.innerHTML = ICON_STAR;
-                btnFav.title = "收藏";
-                btnFav.onclick = (e) => { e.stopPropagation(); toggleFav(item.name, btnFav); };
-
-                // C. Danbooru 直达链接
+                const btnSelect = createBtn('btn-select', isSelected ? 'active' : '', ICON_CHECK, (e) => toggleSelection(item.name, card, btnSelect));
+                const btnFav = createBtn('btn-fav', isFav ? 'active' : '', ICON_STAR, (e) => toggleFav(item.name, btnFav));
+                
                 const btnLink = document.createElement('a');
                 btnLink.className = 'action-btn btn-link';
                 btnLink.innerHTML = ICON_LINK;
                 btnLink.href = `https://danbooru.donmai.us/posts?tags=${item.name}`;
                 btnLink.target = "_blank";
-                btnLink.title = "去 Danbooru 查看详情";
-                btnLink.onclick = (e) => e.stopPropagation(); // 防止触发图片放大
+                btnLink.onclick = (e) => e.stopPropagation();
 
                 actions.append(btnSelect, btnFav, btnLink);
 
-                // --- 图片区域 (懒加载) ---
+                // 图片
                 const imgWrapper = document.createElement('div');
                 imgWrapper.className = 'card-img-wrapper';
                 imgWrapper.onclick = () => openLightbox(item.image);
-                
                 const img = document.createElement('img');
-                // 浏览器原生懒加载
                 img.loading = "lazy"; 
                 img.src = item.image;
-                // 图片加载完成后，添加 class 去除透明度
                 img.onload = () => img.classList.add('loaded');
-                img.onerror = function() { this.src = 'https://via.placeholder.com/200?text=Error'; this.classList.add('loaded'); };
-                
+                img.onerror = function() { this.src = 'https://via.placeholder.com/200?text=Err'; this.classList.add('loaded'); };
                 imgWrapper.appendChild(img);
 
-                // --- 底部文字 (复制) ---
+                // 文字
                 const info = document.createElement('div');
                 info.className = 'card-info';
-                info.title = "点击复制单个 tag";
                 info.innerHTML = `<div class="artist-name">${item.name}</div>`;
-                info.onclick = () => copyText(`artist:${item.name}`, `已复制: artist:${item.name}`);
+                info.onclick = () => copySingle(item.name);
 
-                card.appendChild(actions);
-                card.appendChild(imgWrapper);
-                card.appendChild(info);
+                card.append(actions, imgWrapper, info);
                 gallery.appendChild(card);
             });
-
-            if (filtered.length === 0) {
-                gallery.innerHTML = "<p style='text-align:center; width:100%; color:#999'>没有找到符合条件的画师。</p>";
-            }
         }
 
-        // === 功能逻辑 ===
+        function createBtn(cls, active, html, onClick) {
+            const d = document.createElement('div');
+            d.className = `action-btn ${cls} ${active}`;
+            d.innerHTML = html;
+            d.onclick = (e) => { e.stopPropagation(); onClick(e); };
+            return d;
+        }
 
-        // 1. 抽卡功能
+        // === 功能函数 ===
+
+        // 获取当前是否需要前缀
+        function getPrefix() {
+            return document.getElementById('check-prefix').checked ? 'artist:' : '';
+        }
+
+        function savePrefixSetting() {
+            const val = document.getElementById('check-prefix').checked;
+            localStorage.setItem('usePrefix', val);
+        }
+
+        // 复制单个
+        function copySingle(name) {
+            const prefix = getPrefix();
+            copyText(`${prefix}${name}`, `已复制: ${prefix}${name}`);
+        }
+
+        // 复制组合
+        function copyCart() {
+            if (selectedArtists.size === 0) return;
+            const prefix = getPrefix();
+            const tags = Array.from(selectedArtists).map(t => `${prefix}${t}`).join(', ');
+            copyText(tags, `已复制 ${selectedArtists.size} 位画师！`);
+        }
+
+        // 抽卡
         function gacha() {
-            const countInput = document.getElementById('gacha-count');
-            let count = parseInt(countInput.value) || 3;
-            // 限制一下最大数量，防止卡死
-            if (count > 20) count = 20;
-
-            // 从当前筛选结果中抽，还是全库抽？这里设定为：如果正在搜索，就从搜索结果抽；否则全库抽
-            const term = searchInput.value.toLowerCase();
-            const pool = allArtists.filter(item => {
-                const matchName = item.name.toLowerCase().includes(term);
-                const matchFav = isFavOnly ? favArtists.has(item.name) : true;
-                return matchName && matchFav;
-            });
-
-            if (pool.length === 0) {
-                showToast("当前列表为空，无法抽卡");
-                return;
-            }
-
-            // 随机算法
-            const luckyIndices = new Set();
-            while (luckyIndices.size < count && luckyIndices.size < pool.length) {
-                const r = Math.floor(Math.random() * pool.length);
-                luckyIndices.add(r);
-            }
-
-            // 加入购物车
-            luckyIndices.forEach(idx => {
-                const name = pool[idx].name;
-                selectedArtists.add(name);
-            });
-
-            // 刷新界面
-            render(); 
-            updateCartUI();
-            showToast(`🎉 成功抽取 ${luckyIndices.size} 位画师！`);
-        }
-
-        // 2. 收藏功能
-        function toggleFav(name, btnElement) {
-            if (favArtists.has(name)) {
-                favArtists.delete(name);
-                btnElement.classList.remove('active');
+            let pool = [];
+            // 如果搜索框有内容（无论批量还是普通），就只从当前结果里抽
+            if (searchInput.value.trim()) {
+                // 复用 render 的过滤逻辑有点麻烦，这里简单处理：直接从 DOM 里拿当前显示的卡片
+                const visibleCards = document.querySelectorAll('.card');
+                visibleCards.forEach(c => pool.push(c.dataset.name));
             } else {
-                favArtists.add(name);
-                btnElement.classList.add('active');
+                // 没搜索，就从全库（或者收藏夹）里抽
+                const source = isFavOnly ? Array.from(favArtists) : allArtists.map(a => a.name);
+                pool = source;
             }
-            // 保存到本地
-            localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
+
+            if (pool.length === 0) { showToast("当前列表为空，没法抽！"); return; }
+
+            const count = Math.min(parseInt(document.getElementById('gacha-count').value) || 3, 20);
+            const picks = new Set();
             
-            // 如果当前是在“只看收藏”模式下取消收藏，需要刷新列表移除它
-            if (isFavOnly) {
-                render();
+            // 简单随机
+            for(let i=0; i<100; i++) { // 防止死循环
+                if (picks.size >= count || picks.size >= pool.length) break;
+                const r = pool[Math.floor(Math.random() * pool.length)];
+                picks.add(r);
             }
+
+            picks.forEach(name => selectedArtists.add(name));
+            render(); // 刷新选中状态
+            updateCartUI();
+            showToast(`🎉 抽到了: ${Array.from(picks).slice(0,3).join(', ')} ...`);
         }
 
-        function toggleShowFav() {
-            isFavOnly = !isFavOnly;
-            const btn = document.getElementById('btn-show-fav');
-            if (isFavOnly) btn.classList.add('active');
-            else btn.classList.remove('active');
-            render();
-        }
-
-        // 3. 购物车逻辑
         function toggleSelection(name, card, btn) {
             if (selectedArtists.has(name)) {
                 selectedArtists.delete(name);
@@ -475,46 +498,34 @@
             const count = selectedArtists.size;
             document.getElementById('cart-count').innerText = count;
             const bar = document.getElementById('cart-bar');
-            if (count > 0) bar.classList.add('show');
-            else bar.classList.remove('show');
+            if (count > 0) bar.classList.add('show'); else bar.classList.remove('show');
         }
 
-        function copyCart() {
-            if (selectedArtists.size === 0) return;
-            const tags = Array.from(selectedArtists).map(t => `artist:${t}`).join(', ');
-            copyText(tags, `已复制 ${selectedArtists.size} 位画师组合！`);
+        function toggleFav(name, btn) {
+            if (favArtists.has(name)) {
+                favArtists.delete(name);
+                btn.classList.remove('active');
+            } else {
+                favArtists.add(name);
+                btn.classList.add('active');
+            }
+            localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
+            if (isFavOnly) render();
         }
 
-        function clearCart() {
-            selectedArtists.clear();
-            render(); // 重新渲染最简单
-            updateCartUI();
+        function toggleShowFav() {
+            isFavOnly = !isFavOnly;
+            document.getElementById('btn-show-fav').classList.toggle('active', isFavOnly);
+            render();
         }
 
-        // 通用
-        function copyText(text, msg) {
-            navigator.clipboard.writeText(text).then(() => showToast(msg));
-        }
-
-        function showToast(msg) {
-            const t = document.getElementById("toast");
-            t.innerText = msg;
-            t.className = "toast show";
-            setTimeout(() => t.className = t.className.replace("show", ""), 2000);
-        }
-
-        // 灯箱
-        function openLightbox(src) {
-            document.getElementById('lightbox-img').src = src;
-            document.getElementById('lightbox').style.display = 'flex';
-        }
-        function closeLightbox() {
-            document.getElementById('lightbox').style.display = 'none';
-        }
-
-        // 搜索监听
-        searchInput.addEventListener('input', () => render());
-
+        function clearCart() { selectedArtists.clear(); render(); updateCartUI(); }
+        function copyText(t, m) { navigator.clipboard.writeText(t).then(() => showToast(m)); }
+        function showToast(m) { const t=document.getElementById("toast"); t.innerText=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2000); }
+        function openLightbox(s) { document.getElementById('lightbox-img').src=s; document.getElementById('lightbox').style.display='flex'; }
+        function closeLightbox() { document.getElementById('lightbox').style.display='none'; }
+        
+        searchInput.addEventListener('input', render);
     </script>
 </body>
 </html>
