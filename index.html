@@ -380,7 +380,31 @@
             else favArtists.add(name);
             localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
         }
-// === 修复后的抽卡函数 ===
+        function toggleShowFav() {
+            isFavOnly = !isFavOnly;
+            const btn = document.getElementById('btn-show-fav');
+            
+            // 切换按钮样式
+            if (isFavOnly) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+            
+            // 重新渲染列表
+            render();
+        }
+
+        // 顺便修复卡片上星星点击后不自动刷新的问题
+        // 请替换原有的 toggleFav 函数
+        function toggleFav(name) {
+            if (favArtists.has(name)) favArtists.delete(name);
+            else favArtists.add(name);
+            localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
+            
+            // 如果当前在“只看收藏”模式，取消收藏后应该立即从界面消失
+            if (isFavOnly) render();
+        }
         function gacha() {
             // 1. 确定抽卡池子 (Pool)
             let pool = [];
