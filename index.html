@@ -380,27 +380,64 @@
             else favArtists.add(name);
             localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
         }
-
+// === 修复后的抽卡函数 ===
         function gacha() {
+            // 1. 确定抽卡池子 (Pool)
             let pool = [];
+            
+            // 如果搜索框有字（不管是搜名字还是批量解析），就只从当前能在屏幕上看到的卡片里抽
+            // 这样你可以先搜 "blue"，然后从蓝色系画师里随机抽
             if (searchInput.value.trim()) {
-                // 从当前可视卡片里抽
-                document.querySelectorAll('.card').forEach(c => pool.push(c.dataset.name));
+                const visibleCards = document.querySelectorAll('.card');
+                visibleCards.forEach(c => pool.push(c.dataset.name));
             } else {
+                // 如果没搜索，看是否开了“只看收藏”
+                // 如果是只看收藏，就在收藏夹里抽；否则在全库 700 人里抽
                 pool = isFavOnly ? Array.from(favArtists) : allArtists.map(a => a.name);
             }
-            if (!pool.length) { showToast("列表为空"); return; }
-            
-            const count = Math.min(parseInt(document.getElementById('gacha-count').value)||3, 20);
-            for(let i=0; i<100 && selectedArtists.size < pool.length; i++) {
-                const r = pool[Math.floor(Math.random() * pool.length)];
-                selectedArtists.add(r);
-                if(selectedArtists.size >= count + selectedArtists.size) break; // 逻辑简化
+
+            // 池子空的，不抽
+            if (pool.length === 0) { 
+                showToast("当前列表为空，没法抽！"); 
+                return; 
             }
-            // 简单点，直接随机加几个
-            for(let k=0; k<count; k++) selectedArtists.add(pool[Math.floor(Math.random()*pool.length)]);
+
+            // 2. 获取要抽的数量 (默认1个)
+            let countInput = parseInt(document.getElementById('gacha-count').value);
+            let count = (isNaN(countInput) || countInput < 1) ? 1 : countInput;
             
-            render(); updateCartUI(); showToast(`🎉 抽取完成！`);
+            // 限制一下最大单次抽取数，防止卡死 (比如你填了1000)
+            if (count > 50) count = 50;
+
+            // 3. 抽取逻辑
+            let addedCount = 0;
+            let maxAttempts = count * 10; //以此防止运气不好一直随到重复的导致死循环
+            let attempts = 0;
+
+            while (addedCount < count && attempts < maxAttempts) {
+                attempts++;
+                // 随机选一个
+                const randomName = pool[Math.floor(Math.random() * pool.length)];
+                
+                // 如果这个人还没在购物车里，就加上
+                if (!selectedArtists.has(randomName)) {
+                    selectedArtists.add(randomName);
+                    addedCount++;
+                }
+                
+                // 如果池子里的都被选光了，就别试了
+                if (selectedArtists.size >= allArtists.length) break;
+            }
+
+            // 4. 刷新界面
+            render(); 
+            updateCartUI();
+            
+            if (addedCount > 0) {
+                showToast(`🎉 成功抽取 ${addedCount} 位！`);
+            } else {
+                showToast(`⚠️ 没抽到新的 (可能你想抽的都在车里了)`);
+            }
         }
         
         function clearCart() { selectedArtists.clear(); render(); updateCartUI(); }
