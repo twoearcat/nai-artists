@@ -115,10 +115,11 @@
     <div id="lightbox" onclick="this.style.display='none'"><img id="lb-img"></div>
     <div id="toast" class="toast">已复制到剪贴板</div>
 
-    <script>
+<script>
         let allData = [];
         let currentFilter = 'all';
 
+        // 读取数据
         fetch('showcase.json')
             .then(res => res.json())
             .then(data => {
@@ -144,7 +145,7 @@
                 return;
             }
 
-            filtered.forEach((item, index) => {
+            filtered.forEach((item) => {
                 // 1. 生成侧边栏导航项
                 const navItem = document.createElement('div');
                 navItem.className = 'nav-item';
@@ -164,19 +165,24 @@
                 const tagClass = item.category === 'run' ? 'run' : 'combo';
                 const tagName = item.category === 'run' ? '精选 Run' : '画师 Combo';
 
+                // === 关键修复点 ===
+                // 使用 encodeURIComponent 对 prompt 进行编码，防止换行符或引号破坏 HTML 结构
+                const safePrompt = encodeURIComponent(item.prompt || ""); 
+
                 card.innerHTML = `
                     <div class="card-header">
-                        <span class="card-title">${item.title}</span>
+                        <span class="card-title">${escapeHtml(item.title)}</span>
                         <span class="card-tag ${tagClass}">${tagName}</span>
                     </div>
                     <div class="card-body">
                         <div class="card-img" onclick="openLightbox('${item.image}')">
-                            <img src="${item.image}" loading="lazy" alt="${item.title}">
+                            <img src="${item.image}" loading="lazy" alt="${escapeHtml(item.title)}">
                         </div>
                         <div class="card-prompt">
                             <div class="prompt-label">Prompt / 组合代码</div>
                             <div class="prompt-text">${escapeHtml(item.prompt)}</div>
-                            <button class="btn-copy" onclick="copyText(this, '${escapeHtml(item.prompt.replace(/'/g, "\\'"))}')">
+                            <!-- 这里的 onclick 传递的是编码后的字符串 -->
+                            <button class="btn-copy" onclick="copyText(this, '${safePrompt}')">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                 复制
                             </button>
@@ -199,21 +205,38 @@
             document.getElementById('lightbox').style.display = 'flex';
         }
 
-        function copyText(btn, text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const t = document.getElementById('toast');
-                t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), 2000);
-                
-                const oldText = btn.innerHTML;
-                btn.innerHTML = "已复制 ✓";
-                setTimeout(() => btn.innerHTML = oldText, 1000);
-            });
+        // === 关键修复点 ===
+        // 接收编码后的字符串，先解码再复制
+        function copyText(btn, encodedText) {
+            try {
+                const text = decodeURIComponent(encodedText);
+                navigator.clipboard.writeText(text).then(() => {
+                    // 显示 Toast
+                    const t = document.getElementById('toast');
+                    t.classList.add('show');
+                    setTimeout(() => t.classList.remove('show'), 2000);
+                    
+                    // 按钮反馈
+                    const oldHtml = btn.innerHTML;
+                    btn.innerHTML = "已复制 ✓";
+                    // 1秒后恢复按钮原样
+                    setTimeout(() => btn.innerHTML = oldHtml, 1000);
+                }).catch(err => {
+                    console.error("复制失败:", err);
+                    alert("复制失败，请手动复制");
+                });
+            } catch (e) {
+                console.error("解码失败:", e);
+            }
         }
         
         function escapeHtml(text) {
             if (!text) return "";
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            return text.replace(/&/g, "&amp;")
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;")
+                       .replace(/"/g, "&quot;")
+                       .replace(/'/g, "&#039;");
         }
     </script>
     <!-- 回顶按钮 (Gallery版) -->
