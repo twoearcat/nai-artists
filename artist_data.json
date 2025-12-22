@@ -2730,5 +2730,41 @@
   {
     "name": "zurikishi",
     "image": "images\\zurikishi.jpg"
+  },
+  {
+    "name": "ameto_yuki",
+    "image": "images\\ameto_yuki.jpg"
+  },
+  {
+    "name": "ikegami_akane",
+    "image": "images\\ikegami_akane.jpg"
+  },
+  {
+    "name": "shouna_mitsuishi",
+    "image": "images\\shouna_mitsuishi.jpg"
+  },
+  {
+    "name": "zinno",
+    "image": "images\\zinno.jpg"
+  },
+  {
+    "name": "karyln",
+    "image": "images\\karyln.jpg"
+  },
+  {
+    "name": "han_(hehuihuihui)",
+    "image": "images\\han_(hehuihuihui).jpg"
+  },
+  {
+    "name": "shenmi_de_xigua",
+    "image": "images\\shenmi_de_xigua.jpg"
+  },
+  {
+    "name": "jiuchong_ying_fengxue",
+    "image": "images\\jiuchong_ying_fengxue.jpg"
+  },
+  {
+    "name": "tyomimas",
+    "image": "images\\tyomimas.jpg"
   }
 ]
