@@ -615,9 +615,23 @@
             });
         }
         function clearHistory() { copyHistory=[]; localStorage.setItem('copyHistory','[]'); renderHistory(); }
-        function addToHistory(t) { copyHistory.unshift({text:t, time:new Date().toLocaleTimeString()}); if(copyHistory.length>20) copyHistory.pop(); localStorage.setItem('copyHistory', JSON.stringify(copyHistory)); }
-        
-        // 灯箱
+        function addToHistory(text) {
+            // 1. 清洗数据：如果历史记录中已经存在一模一样的 text，直接滤掉（去重）
+            copyHistory = copyHistory.filter(item => item.text !== text);
+
+            // 2. 将最新的记录插入到数组最前面
+            const entry = { 
+                text: text, 
+                time: new Date().toLocaleTimeString() 
+            };
+            copyHistory.unshift(entry);
+
+            // 3. 限制长度（比如最多保留 30 条）
+            if (copyHistory.length > 30) copyHistory.pop();
+
+            // 4. 保存到本地存储
+            localStorage.setItem('copyHistory', JSON.stringify(copyHistory));
+        }        // 灯箱
         function openLightbox(src, name) {
             document.getElementById('lightbox-img').src = src;
             document.getElementById('lightbox-link').href = `https://danbooru.donmai.us/posts?tags=${name}`;
