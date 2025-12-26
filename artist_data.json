@@ -44,6 +44,10 @@
     "image": "images\\ainy.jpg"
   },
   {
+    "name": "aiue_oka",
+    "image": "images\\aiue_oka.jpg"
+  },
+  {
     "name": "ajishio",
     "image": "images\\ajishio.jpg"
   },
@@ -2430,6 +2434,10 @@
   {
     "name": "takatsuki_ichi",
     "image": "images\\takatsuki_ichi.jpg"
+  },
+  {
+    "name": "takeda_hiromitsu",
+    "image": "images\\takeda_hiromitsu.jpg"
   },
   {
     "name": "takejun",
