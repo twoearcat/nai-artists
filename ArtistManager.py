@@ -409,12 +409,48 @@ class ArtistManagerApp:
 
     def _dl(self, u, p):
         try:
-            with requests.get(u, stream=True, timeout=15) as r:
+            # 1. 发起请求，增加 headers 伪装
+            headers = DEFAULT_HEADERS.copy()
+            # 如果配置里有 user，带上 user 更好
+            user = self.entry_user.get().strip()
+            if user: headers['User-Agent'] = f'NovelAI_Artist_Manager/2.0 ({user})'
+
+            with requests.get(u, stream=True, timeout=20, headers=headers, verify=False) as r:
                 r.raise_for_status()
+
+                # 2. 检查 Content-Type (防止把 html 网页当图片下)
+                ct = r.headers.get('Content-Type', '').lower()
+                if 'image' not in ct and 'octet-stream' not in ct:
+                    self.log(f"    -> ⚠️ 警告: 服务器返回的不是图片，而是 {ct}")
+                    return False
+
+                # 3. 写入文件
                 with open(p, 'wb') as f:
-                    for c in r.iter_content(8192): f.write(c)
+                    for chunk in r.iter_content(8192):
+                        f.write(chunk)
+
+            # 4. 【关键步骤】下载完成后，校验图片完整性
+            # 如果是网页或坏文件，这里会报错，从而触发 except 删除坏文件
+            try:
+                with Image.open(p) as img:
+                    img.verify()  # 校验文件结构是否损坏
+            except Exception as e:
+                self.log(f"    -> ⚠️ 图片文件损坏或无效，已删除 ({e})")
+                if os.path.exists(p):
+                    os.remove(p)  # 删掉坏文件，防止看着闹心
+                return False
+
             return True
-        except:
+
+        except Exception as e:
+            # 如果发生网络错误，也要确保没有留下半截的坏文件
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                except:
+                    pass
+            # 打印一点简单的错误提示（可选）
+            # print(f"下载异常: {e}")
             return False
 
     # ================= 基础工具 =================
