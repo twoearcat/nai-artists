@@ -8,6 +8,12 @@ import threading
 import time
 import re
 
+# ================= 代理设置 =================
+PROXY_PORT = '7897'
+
+os.environ["http_proxy"] = f"http://127.0.0.1:{PROXY_PORT}"
+os.environ["https_proxy"] = f"http://127.0.0.1:{PROXY_PORT}"
+
 # ================= 配置区域 =================
 CONFIG_FILE = 'config.json'
 ARTIST_FILE = 'artists.txt'
@@ -16,6 +22,23 @@ IMAGE_DIR = 'images'
 # 使用特定 UA 防止被判定为脚本攻击
 DEFAULT_HEADERS = {'User-Agent': 'NovelAI_Artist_Manager/HighRes_v7'}
 
+API_STATUS_CODES = {
+    200: "请求成功",
+    204: "请求成功 (无内容)",
+    400: "参数错误 (Bad Request)",
+    401: "认证失败 (检查账号/API Key)",
+    403: "拒绝访问 (权限不足/被禁止)",
+    404: "未找到 (Not Found)",
+    410: "分页限制 (Gone)",
+    420: "无效记录",
+    422: "资源锁定或验证失败",
+    423: "资源已存在",
+    424: "参数无效",
+    429: "请求过于频繁 (被限流，请稍后)",
+    500: "服务器内部错误",
+    502: "网关错误 (服务器负载过高)",
+    503: "服务不可用 (Downbooru)",
+}
 
 class ArtistManagerApp:
     def __init__(self, root):
@@ -260,6 +283,8 @@ class ArtistManagerApp:
         if not os.path.exists(IMAGE_DIR): os.makedirs(IMAGE_DIR)
 
         stats = {'total': len(self.artists), 'skip': 0, 'new': 0, 'fail': []}
+
+        # 读取现有数据
         res_map = {}
         if os.path.exists(DATA_FILE):
             try:
@@ -275,7 +300,7 @@ class ArtistManagerApp:
             safe_name = self.get_safe_filename(art)
             path = os.path.join(IMAGE_DIR, f"{safe_name}.jpg")
 
-            # 检查本地 (如果已有图，通常不重新下载，除非你手动删了图想更新)
+            # 检查本地
             if os.path.exists(path):
                 stats['skip'] += 1
                 res_map[art] = path
@@ -283,25 +308,35 @@ class ArtistManagerApp:
                 continue
 
             # 下载
-            self.log(f"[{i + 1}] {art}: ⏳ 下载中...")
-            try:
-                # 尝试顺序: 全年龄高清 -> 全部分级高清 -> (备用逻辑)
-                url = self._fetch(art, 'rating:general', user, key)
-                if not url:
-                    url = self._fetch(art, '', user, key)
+            self.log(f"[{i + 1}] {art}: ⏳ 搜索中...")
 
-                if url and self._dl(url, path):
+            # 第一尝试：全年龄
+            url, error_msg = self._fetch(art, 'rating:general', user, key)
+
+            # 如果没找到且没有严重错误，尝试无分级限制（可能是R18画师）
+            if not url and (error_msg and "为空" in error_msg):
+                self.log(f"    -> ⚠️ 全年龄未找到，尝试全部分级...")
+                time.sleep(1)  # 稍微暂停防止429
+                url, error_msg = self._fetch(art, '', user, key)
+
+            if url:
+                self.log(f"    -> 捕捉到链接，下载中...")
+                if self._dl(url, path):
                     stats['new'] += 1
                     res_map[art] = path
-                    self.log(f"    -> 🎉 成功 (高清/原图)")
+                    self.log(f"    -> 🎉 成功")
                 else:
                     stats['fail'].append(art)
-                    self.log(f"    -> ❌ 失败")
-                time.sleep(1.2)
-            except Exception as e:
+                    self.log(f"    -> ❌ 下载流断开或写入失败")
+            else:
                 stats['fail'].append(art)
-                self.log(f"    -> ❌ 错误: {e}")
+                # 打印具体的 API 错误信息
+                self.log(f"    -> ❌ 获取失败: {error_msg}")
 
+            # 增加延时，防止 429 User Throttled
+            time.sleep(2)
+
+            # 保存结果
         final_list = [{"name": k, "image": v} for k, v in res_map.items() if k in self.artists]
         final_list.sort(key=lambda x: x['name'])
         with open(DATA_FILE, 'w', encoding='utf-8') as f:
@@ -315,32 +350,62 @@ class ArtistManagerApp:
         self.log(f"\n{sep}\n统计报告\n{sep}")
         self.log(f"总数: {stats['total']} | 跳过: {stats['skip']} | 新增: {stats['new']} | 失败: {len(stats['fail'])}")
         if stats['fail']:
-            self.log("失败列表:")
+            self.log("失败列表 (请检查日志中的具体错误原因):")
             for f in stats['fail']: self.log(f"artist:{f}")
         messagebox.showinfo("完成", "更新结束")
 
     # ================= 关键修改：API 获取逻辑 =================
     def _fetch(self, t, ex, u, k):
         try:
-            # 关键修改：requested fields 增加了 large_file_url
-            params = {
-                'tags': f'{t} {ex} order:score',
-                'limit': 1,
-                'only': 'large_file_url,file_url,preview_file_url'
-            }
-            r = requests.get('https://danbooru.donmai.us/posts.json', params=params, auth=(u, k),
-                             headers=DEFAULT_HEADERS, timeout=10)
+            # 构造 Tag，处理 ex 为空的情况
+            search_tag = f'{t} {ex} order:score'.strip()
 
-            if r.status_code == 200 and r.json():
-                post = r.json()[0]
-                # 优先级逻辑：
-                # 1. large_file_url (高清样图，约850px，最适合)
-                # 2. file_url (原图，可能太大，但比缩略图好)
-                # 3. preview_file_url (缩略图，最后才会用这个)
-                return post.get('large_file_url') or post.get('file_url') or post.get('preview_file_url')
-        except:
-            pass
-        return None
+            params = {
+                'tags': search_tag,
+                'limit': 1,
+                # 某些老旧图片可能没有 large_file_url，增加 source 方便调试
+                'only': 'large_file_url,file_url,preview_file_url,id'
+            }
+
+            # 优化 UA，包含用户名有助于防止被封禁（如果用户填了的话）
+            headers = DEFAULT_HEADERS.copy()
+            if u:
+                headers['User-Agent'] = f'NovelAI_Artist_Manager/2.0 ({u})'
+
+            # 发起请求
+            r = requests.get('https://danbooru.donmai.us/posts.json',
+                             params=params,
+                             auth=(u, k),
+                             headers=headers,
+                             timeout=15)
+
+            # 状态码判断
+            if r.status_code == 200:
+                data = r.json()
+                if not data:
+                    return None, "搜索结果为空 (Tag可能不匹配)"
+
+                post = data[0]
+                url = post.get('large_file_url') or post.get('file_url') or post.get('preview_file_url')
+
+                if not url:
+                    return None, f"找到记录但无图片链接 (ID: {post.get('id')})"
+
+                return url, None
+
+            else:
+                # 返回具体的 HTTP 错误码和文档描述
+                error_desc = API_STATUS_CODES.get(r.status_code, "未知错误")
+                return None, f"API {r.status_code}: {error_desc}"
+
+        except requests.exceptions.ConnectionError:
+            return None, "网络连接失败 (DNS/代理问题)"
+        except requests.exceptions.Timeout:
+            return None, "请求超时"
+        except json.JSONDecodeError:
+            return None, "API 返回了非 JSON 数据 (可能是 Cloudflare 拦截)"
+        except Exception as e:
+            return None, f"脚本异常: {str(e)}"
 
     def _dl(self, u, p):
         try:

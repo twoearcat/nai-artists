@@ -512,10 +512,6 @@
     "image": "images\\eip_(pepai).jpg"
   },
   {
-    "name": "elun_(meido)",
-    "image": "images\\elun_(meido).jpg"
-  },
-  {
     "name": "endou_okito",
     "image": "images\\endou_okito.jpg"
   },
@@ -530,10 +526,6 @@
   {
     "name": "eta",
     "image": "images\\eta.jpg"
-  },
-  {
-    "name": "ett",
-    "image": "images\\ett.jpg"
   },
   {
     "name": "eufoniuz",
@@ -706,6 +698,10 @@
   {
     "name": "hews",
     "image": "images\\hews.jpg"
+  },
+  {
+    "name": "hibana_(hibana_ztlv)",
+    "image": "images\\hibana_(hibana_ztlv).jpg"
   },
   {
     "name": "hidulume",
@@ -1832,10 +1828,6 @@
     "image": "images\\phantom_ix_row.jpg"
   },
   {
-    "name": "phtharticpaul",
-    "image": "images\\phtharticpaul.jpg"
-  },
-  {
     "name": "pigeon666",
     "image": "images\\pigeon666.jpg"
   },
@@ -2084,10 +2076,6 @@
     "image": "images\\s16xue.jpg"
   },
   {
-    "name": "sagami_jon",
-    "image": "images\\sagami_jon.jpg"
-  },
-  {
     "name": "saiguchi_otoufu",
     "image": "images\\saiguchi_otoufu.jpg"
   },
@@ -2206,10 +2194,6 @@
   {
     "name": "shimada_fumikane",
     "image": "images\\shimada_fumikane.jpg"
-  },
-  {
-    "name": "shimatani_azu",
-    "image": "images\\shimatani_azu.jpg"
   },
   {
     "name": "shimejinameko",
@@ -2626,10 +2610,6 @@
   {
     "name": "uenomigi",
     "image": "images\\uenomigi.jpg"
-  },
-  {
-    "name": "umezawa_itte",
-    "image": "images\\umezawa_itte.jpg"
   },
   {
     "name": "umishima_senbon",
