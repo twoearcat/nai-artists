@@ -362,9 +362,9 @@ class ArtistManagerApp:
 
             params = {
                 'tags': search_tag,
-                'limit': 1,
-                # 某些老旧图片可能没有 large_file_url，增加 source 方便调试
-                'only': 'large_file_url,file_url,preview_file_url,id'
+                'limit': 10,  # 获取多个结果，以便跳过视频
+                # 增加 file_ext 用于客户端过滤视频
+                'only': 'large_file_url,file_url,preview_file_url,id,file_ext'
             }
 
             # 优化 UA，包含用户名有助于防止被封禁（如果用户填了的话）
@@ -385,13 +385,19 @@ class ArtistManagerApp:
                 if not data:
                     return None, "搜索结果为空 (Tag可能不匹配)"
 
-                post = data[0]
-                url = post.get('large_file_url') or post.get('file_url') or post.get('preview_file_url')
-
-                if not url:
-                    return None, f"找到记录但无图片链接 (ID: {post.get('id')})"
-
-                return url, None
+                # 遍历结果，跳过视频文件
+                VIDEO_EXTS = {'mp4', 'webm', 'zip', 'rar', 'swf'}
+                for post in data:
+                    file_ext = post.get('file_ext', '').lower()
+                    if file_ext in VIDEO_EXTS:
+                        continue  # 跳过视频/压缩包
+                    
+                    url = post.get('large_file_url') or post.get('file_url') or post.get('preview_file_url')
+                    if url:
+                        return url, None
+                
+                # 所有结果都是视频或无链接
+                return None, f"找到 {len(data)} 条记录但均为视频或无图片链接"
 
             else:
                 # 返回具体的 HTTP 错误码和文档描述
@@ -422,6 +428,12 @@ class ArtistManagerApp:
                 ct = r.headers.get('Content-Type', '').lower()
                 if 'image' not in ct and 'octet-stream' not in ct:
                     self.log(f"    -> ⚠️ 警告: 服务器返回的不是图片，而是 {ct}")
+                    return False
+
+                # 3. 检查文件大小，>1MB 的文件可能是视频或异常文件
+                content_length = int(r.headers.get('Content-Length', 0))
+                if content_length > 1 * 1024 * 1024:  # 1MB
+                    self.log(f"    -> ⚠️ 文件过大 ({content_length/1024/1024:.2f}MB)，跳过")
                     return False
 
                 # 3. 写入文件
