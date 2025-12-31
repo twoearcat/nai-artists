@@ -1,3 +1,4 @@
+c
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -1269,6 +1270,8 @@
                 const found = new Set();
                 segs.forEach(s => {
                     let c = s.toLowerCase().trim().replace(/artist:/g, '').replace(/[\[\]\{\}]/g, '');
+                    // 移除 NAI 数字权重语法（如 -2::xxx:: 或 0.5::xxx::）
+                    c = c.replace(/^-?[\d.]+::/, '').replace(/::$/, '').trim();
                     if (!c) return;
                     if (artistNameSet.has(c)) {
                         found.add(c);
@@ -1529,6 +1532,9 @@
 
                 // 移除 artist: 前缀
                 cleaned = cleaned.replace(/^artist:/i, '').trim();
+
+                // 移除 NAI 数字权重语法（如 -2::xxx:: 或 0.5::xxx::）
+                cleaned = cleaned.replace(/^-?[\d.]+::/, '').replace(/::$/, '').trim();
 
                 // 限制权重范围
                 weight = Math.max(-3, Math.min(3, weight));
