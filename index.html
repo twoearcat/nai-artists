@@ -366,6 +366,7 @@
             font-size: 14px;
             transition: transform 0.2s;
             text-decoration: none;
+            user-select: none;
         }
 
         body.dark-mode .action-btn {
@@ -758,6 +759,127 @@
             inset: 0;
             z-index: 1999;
         }
+
+        /* 导入弹窗 */
+        #import-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 3500;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #import-modal.open {
+            display: flex;
+        }
+
+        .import-dialog {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .import-dialog h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .import-dialog p {
+            margin: 0 0 16px 0;
+            font-size: 13px;
+            color: var(--sub-text);
+        }
+
+        #import-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        #import-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .import-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .import-actions button {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .btn-import-cancel {
+            background: var(--chip-bg);
+            color: var(--sub-text);
+        }
+
+        .btn-import-confirm {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-import-confirm:hover {
+            background: var(--primary-hover);
+        }
+
+        .import-preview {
+            margin-top: 12px;
+            padding: 10px;
+            background: var(--chip-bg);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--sub-text);
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .import-preview .preview-chip {
+            display: inline-block;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 12px;
+        }
+
+        .import-preview .preview-chip.new {
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+
+        .import-preview .preview-chip.exists {
+            opacity: 0.5;
+        }
+
+        .import-preview .preview-chip.unknown {
+            border-color: #e74c3c;
+            color: #e74c3c;
+            text-decoration: line-through;
+        }
     </style>
 </head>
 
@@ -777,6 +899,8 @@
         </div>
 
         <div class="settings-group">
+            <button class="btn-toggle" onclick="openImportModal()" title="批量导入画师串"
+                style="background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32;">📥</button>
             <button class="btn-toggle" onclick="toggleHistory()" title="历史">🕒</button>
             <button class="btn-toggle" onclick="toggleDarkMode()" title="夜间模式">🌗</button>
             <button class="btn-toggle btn-toggle-fav" id="btn-show-fav" onclick="toggleShowFav()" title="收藏">
@@ -838,6 +962,21 @@
             <a id="lightbox-link" href="#" target="_blank" class="lightbox-link">↗ Danbooru</a>
         </div>
     </div>
+
+    <!-- 批量导入弹窗 -->
+    <div id="import-modal" onclick="closeImportModal()">
+        <div class="import-dialog" onclick="event.stopPropagation()">
+            <h3>📥 批量导入画师</h3>
+            <p>粘贴你的画师串，支持 artist: 前缀和 {} [] 权重符号</p>
+            <textarea id="import-textarea" placeholder="例如：artist:wlop, {artist:nixeu}, [[shaluo]]"></textarea>
+            <div class="import-preview" id="import-preview" style="display:none;"></div>
+            <div class="import-actions">
+                <button class="btn-import-cancel" onclick="closeImportModal()">取消</button>
+                <button class="btn-import-confirm" onclick="confirmImport()">导入</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="toast">提示</div>
 
     <script>
@@ -1123,13 +1262,36 @@
         function toggleFav(name) {
             if (favArtists.has(name)) favArtists.delete(name); else favArtists.add(name);
             localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
-            if (isFavOnly) render(); else render(); // 强制刷新星星
+
+            // 如果在"只看收藏"模式，需要重新渲染（因为要隐藏/显示卡片）
+            if (isFavOnly) {
+                render();
+            } else {
+                // 只更新单个卡片的收藏状态
+                updateFavState(name);
+            }
         }
+
+        // 只更新单个卡片的收藏状态，避免全部图片刷新
+        function updateFavState(name) {
+            const card = document.querySelector(`.card[data-name="${name}"]`);
+            if (!card) return;
+
+            const isFav = favArtists.has(name);
+            const favBtn = card.querySelector('.btn-fav');
+            if (favBtn) {
+                favBtn.classList.toggle('active', isFav);
+            }
+        }
+
         function toggleShowFav() { isFavOnly = !isFavOnly; document.getElementById('btn-show-fav').classList.toggle('active'); render(); }
         function batchFav() {
-            cartItems.forEach(i => favArtists.add(i.name));
+            cartItems.forEach(i => {
+                favArtists.add(i.name);
+                updateFavState(i.name); // 只更新对应卡片
+            });
             localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
-            render(); showToast("已批量收藏");
+            showToast("已批量收藏");
         }
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
@@ -1183,6 +1345,139 @@
         function copySingle(name) {
             const p = document.getElementById('check-prefix').checked ? 'artist:' : '';
             copyText(p + name, "已复制");
+        }
+
+        // === 批量导入功能 ===
+        function openImportModal() {
+            document.getElementById('import-modal').classList.add('open');
+            document.getElementById('import-textarea').value = '';
+            document.getElementById('import-preview').style.display = 'none';
+            document.getElementById('import-textarea').focus();
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.remove('open');
+        }
+
+        // 解析画师串，返回 [{name, weight}, ...]
+        function parseArtistString(input) {
+            const results = [];
+            // 按逗号分隔
+            const segments = input.split(/[,，]/);
+
+            segments.forEach(seg => {
+                seg = seg.trim();
+                if (!seg) return;
+
+                // 计算权重：统计开头的 { 或 [ 数量
+                let weight = 0;
+                let cleaned = seg;
+
+                // 匹配开头的 { 或 [
+                const braceMatch = cleaned.match(/^(\{+)/);
+                const bracketMatch = cleaned.match(/^(\[+)/);
+
+                if (braceMatch) {
+                    weight = braceMatch[1].length; // 正权重
+                    // 移除首尾的 {}
+                    cleaned = cleaned.replace(/^\{+/, '').replace(/\}+$/, '');
+                } else if (bracketMatch) {
+                    weight = -bracketMatch[1].length; // 负权重
+                    // 移除首尾的 []
+                    cleaned = cleaned.replace(/^\[+/, '').replace(/\]+$/, '');
+                }
+
+                // 移除 artist: 前缀
+                cleaned = cleaned.replace(/^artist:/i, '').trim();
+
+                // 限制权重范围
+                weight = Math.max(-3, Math.min(3, weight));
+
+                if (cleaned) {
+                    results.push({ name: cleaned, weight: weight });
+                }
+            });
+
+            return results;
+        }
+
+        // 实时预览
+        document.getElementById('import-textarea').addEventListener('input', function () {
+            const input = this.value;
+            const previewEl = document.getElementById('import-preview');
+
+            if (!input.trim()) {
+                previewEl.style.display = 'none';
+                return;
+            }
+
+            const parsed = parseArtistString(input);
+            previewEl.style.display = 'block';
+
+            if (parsed.length === 0) {
+                previewEl.innerHTML = '<span style="color:#999">未识别到画师</span>';
+                return;
+            }
+
+            previewEl.innerHTML = parsed.map(item => {
+                const exists = selectedSet.has(item.name);
+                const known = artistNameSet.has(item.name.toLowerCase());
+                let cls = 'preview-chip';
+                if (!known) cls += ' unknown';
+                else if (exists) cls += ' exists';
+                else cls += ' new';
+
+                let display = item.name;
+                if (item.weight > 0) display = '{'.repeat(item.weight) + display + '}'.repeat(item.weight);
+                if (item.weight < 0) display = '['.repeat(-item.weight) + display + ']'.repeat(-item.weight);
+
+                let title = known ? (exists ? '已在购物车' : '将添加') : '未找到此画师';
+                return `<span class="${cls}" title="${title}">${display}</span>`;
+            }).join('');
+        });
+
+        function confirmImport() {
+            const input = document.getElementById('import-textarea').value;
+            const parsed = parseArtistString(input);
+
+            let addedCount = 0;
+            let skippedCount = 0;
+            let unknownCount = 0;
+
+            parsed.forEach(item => {
+                const nameLower = item.name.toLowerCase();
+
+                // 检查是否在画师库中
+                if (!artistNameSet.has(nameLower)) {
+                    unknownCount++;
+                    return;
+                }
+
+                // 找到实际名称（保持原始大小写）
+                const actualName = allArtists.find(a => a.name.toLowerCase() === nameLower)?.name || item.name;
+
+                // 检查是否已选中
+                if (selectedSet.has(actualName)) {
+                    // 更新权重
+                    const existingItem = cartItems.find(i => i.name === actualName);
+                    if (existingItem) existingItem.weight = item.weight;
+                    skippedCount++;
+                } else {
+                    // 添加新画师
+                    selectedSet.add(actualName);
+                    cartItems.push({ name: actualName, weight: item.weight });
+                    addedCount++;
+                }
+            });
+
+            closeImportModal();
+            updateCartUI();
+            render(); // 更新卡片选中状态
+
+            let msg = `已导入 ${addedCount} 位画师`;
+            if (skippedCount > 0) msg += `，${skippedCount} 位已存在`;
+            if (unknownCount > 0) msg += `，${unknownCount} 位未找到`;
+            showToast(msg);
         }
 
         document.getElementById('search').addEventListener('input', render);
