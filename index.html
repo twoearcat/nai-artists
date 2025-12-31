@@ -760,6 +760,83 @@
             z-index: 1999;
         }
 
+        /* 未收录画师提示栏 */
+        #unknown-artists-bar {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            margin-left: 50px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 1px solid #ffb74d;
+            border-radius: 12px;
+            color: #e65100;
+        }
+
+        body.dark-mode #unknown-artists-bar {
+            background: linear-gradient(135deg, #3e2723 0%, #4e342e 100%);
+            border-color: #8d6e63;
+            color: #ffcc80;
+        }
+
+        #unknown-artists-bar.show {
+            display: block;
+        }
+
+        .unknown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .unknown-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .unknown-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .unknown-btn {
+            padding: 4px 12px;
+            border-radius: 15px;
+            border: 1px solid currentColor;
+            background: transparent;
+            color: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .unknown-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        body.dark-mode .unknown-btn:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .unknown-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .unknown-chip {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        body.dark-mode .unknown-chip {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
         /* 导入弹窗 */
         #import-modal {
             display: none;
@@ -920,6 +997,18 @@
             <input type="number" id="gacha-count" value="3" min="1" max="50">
             <button class="btn-gacha" onclick="gacha()">🎲 帮我选</button>
         </div>
+    </div>
+
+    <!-- 未收录画师提示栏 -->
+    <div id="unknown-artists-bar">
+        <div class="unknown-header">
+            <span class="unknown-title">⚠️ 以下画师未收录（<span id="unknown-count">0</span> 位）</span>
+            <div class="unknown-actions">
+                <button class="unknown-btn" onclick="copyUnknownArtists()">📋 复制列表</button>
+                <button class="unknown-btn" onclick="hideUnknownBar()">× 关闭</button>
+            </div>
+        </div>
+        <div class="unknown-list" id="unknown-list"></div>
     </div>
 
     <div class="grid" id="gallery"></div>
@@ -1170,23 +1259,40 @@
             let filtered = [];
             let isFiltering = rawTerm || isFavOnly;
 
+            // 未收录画师列表
+            let unknownArtists = [];
+
             // 搜索逻辑
             if (rawTerm.includes(',') || rawTerm.includes('，')) {
-                // 批量解析逻辑... (简略写)
+                // 批量解析逻辑
                 const segs = rawTerm.split(/[,，]/);
                 const found = new Set();
                 segs.forEach(s => {
                     let c = s.toLowerCase().trim().replace(/artist:/g, '').replace(/[\[\]\{\}]/g, '');
-                    if (artistNameSet.has(c)) found.add(c);
+                    if (!c) return;
+                    if (artistNameSet.has(c)) {
+                        found.add(c);
+                    } else {
+                        // 记录未收录的画师（保持原始输入）
+                        unknownArtists.push(c);
+                    }
                 });
                 filtered = allArtists.filter(i => found.has(i.name.toLowerCase()));
+
+                // 显示未收录画师提示
+                updateUnknownArtistsBar(unknownArtists);
             } else {
                 let term = rawTerm.toLowerCase().trim();
                 filtered = allArtists.filter(i => i.name.toLowerCase().includes(term));
+                // 单个搜索时隐藏提示栏
+                hideUnknownBar();
             }
             if (isFavOnly) filtered = filtered.filter(i => favArtists.has(i.name));
 
-            if (filtered.length === 0) { gallery.innerHTML = "<p style='text-align:center;width:100%;color:#999'>无结果</p>"; return; }
+            if (filtered.length === 0) {
+                gallery.innerHTML = "<p style='text-align:center;width:100%;color:#999'>无结果</p>";
+                return;
+            }
 
             // 渲染列表 (带字母标题)
             let lastLetter = "";
@@ -1293,6 +1399,40 @@
             localStorage.setItem('favArtists', JSON.stringify([...favArtists]));
             showToast("已批量收藏");
         }
+
+        // === 未收录画师提示 ===
+        let currentUnknownArtists = [];
+
+        function updateUnknownArtistsBar(unknownList) {
+            currentUnknownArtists = unknownList;
+            const bar = document.getElementById('unknown-artists-bar');
+            const listEl = document.getElementById('unknown-list');
+            const countEl = document.getElementById('unknown-count');
+
+            if (unknownList.length === 0) {
+                bar.classList.remove('show');
+                return;
+            }
+
+            countEl.textContent = unknownList.length;
+            listEl.innerHTML = unknownList.map(name =>
+                `<span class="unknown-chip">${name}</span>`
+            ).join('');
+            bar.classList.add('show');
+        }
+
+        function hideUnknownBar() {
+            document.getElementById('unknown-artists-bar').classList.remove('show');
+        }
+
+        function copyUnknownArtists() {
+            if (currentUnknownArtists.length === 0) return;
+            const text = currentUnknownArtists.join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`已复制 ${currentUnknownArtists.length} 位未收录画师`);
+            });
+        }
+
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
