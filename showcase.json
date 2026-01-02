@@ -1,7 +1,14 @@
 [
   {
+    "id": 1767376539479,
+    "title": "浮空立绘",
+    "category": "run",
+    "image": "gallery_images/img_1767376539469.jpg",
+    "prompt": "{best quality, very aesthetic, year 2024, absurdres,masterpiece},-2::artist:collaboration::,   \n\njyt, gomano_rio, hagi_(ame_hagi), hagoonha, jiuchong_ying_fengxue, ameto_yuki, isshi_pyuma, kouyafu, princess_connect!, game cg, 0.5::sakimori_(hououbds)::,\n\n,1girl,solo,black hair, streaked hair, 0.7::red hair::, long hair, green eye, {slit pupils}, swept bangs, {detailed eyes},{{loli,child}},\n\n{holding huge gift},cubic, holding huge box, {{large purple cubic box}}, present, object covering mouth, covering mouth with object, holding object to chest, red coat, fur trim, fur-trimmed headwear, winter clothes, fur-trimmed capelet, clothing cutout, blush, floating, dynamic pose, full body, snow, snowflakes, wind, wind streams, blue wind, abstract background, white background, simple background, {pigeon-toed}, bare legs, knee together, {{floating}}, {{mid-air}}, shoe_soles, knees,  -2::thighs::,"
+  },
+  {
     "id": 1766896429954,
-    "title": "姿容画风5",
+    "title": "自融画风5",
     "category": "combo",
     "image": "gallery_images/img_1766896429937.jpg",
     "prompt": "{best quality, very aesthetic, year 2024, absurdres,masterpiece},-2::artist:collaboration::,   \n\njyt, gomano_rio, hagi_(ame_hagi), hagoonha, jiuchong_ying_fengxue, ameto_yuki, isshi_pyuma, kouyafu, princess_connect!, game cg, 0.5::sakimori_(hououbds)::, \n\n 1girl, solo,"
